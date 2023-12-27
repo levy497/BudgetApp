@@ -63,3 +63,7 @@ def user_status():
 @jwt_required()
 def get_budget():
     return BudgetController.get_budget()
+
+@transakcje_bp.route('/delete-wydatek/<int:id>', methods=['DELETE'])
+def delete_wydatek(id):
+    return TransakcjeController.delete_wydatek(id)
