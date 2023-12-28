@@ -123,3 +123,47 @@ class TransakcjeController:
         except Exception as e:
             db.session.rollback()
             return jsonify({"msg": "Error", "error": str(e)}), 500
+    @staticmethod
+    def edit_wydatek(id):
+        data = request.get_json()
+        wydatek = Transakcja.query.get(id)
+        if not wydatek:
+            return jsonify({'message': 'Wydatek not found'}), 404
+
+        try:
+            # Zapisz oryginalną kwotę i typ przed dokonaniem aktualizacji
+            original_kwota = wydatek.kwota
+            original_typ = wydatek.typ
+
+            # Aktualizacja danych wydatku
+            wydatek.opis = data['opis']
+            wydatek.kwota = decimal.Decimal(data['kwota'])
+            wydatek.typ = data['typ']
+
+            # Aktualizuj budżet
+            miesiac, rok = wydatek.data_transakcji.month, wydatek.data_transakcji.year
+            budzet = Budzet.query.filter_by(
+                uzytkownik_id=wydatek.uzytkownik_id,
+                kategoria_id=wydatek.kategoria_id,
+                miesiac=miesiac,
+                rok=rok
+            ).first()
+
+            if budzet:
+                # Odwróć oryginalną transakcję
+                if original_typ == 'przychod':
+                    budzet.kwota -= original_kwota
+                else:
+                    budzet.kwota += original_kwota
+
+                # Zastosuj nową transakcję
+                if wydatek.typ == 'przychod':
+                    budzet.kwota += wydatek.kwota
+                else:
+                    budzet.kwota -= wydatek.kwota
+
+            db.session.commit()
+            return jsonify({'message': 'Wydatek updated successfully'}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"msg": "Error", "error": str(e)}), 500

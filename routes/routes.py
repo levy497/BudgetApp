@@ -65,5 +65,11 @@ def get_budget():
     return BudgetController.get_budget()
 
 @transakcje_bp.route('/delete-wydatek/<int:id>', methods=['DELETE'])
+@jwt_required()
 def delete_wydatek(id):
     return TransakcjeController.delete_wydatek(id)
+
+@transakcje_bp.route('/edit-wydatek/<int:id>', methods=['PUT'])
+@jwt_required()
+def edit_wydatek_route(id):
+    return TransakcjeController.edit_wydatek(id)
